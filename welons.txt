@@ -1,0 +1,275 @@
+Welons
+- Inventory
+	- Material
+		- Retrieve material/s (Done)
+		- Add new material (Done)
+		- Update material (Done)
+		- Delete material (Done)
+	- Prefab
+		- Retrieve prefab/s (Done)
+		- Add new prefab (Done)
+		- Update prefab (Done)
+		- Delete prefab (Done)
+		- View current quantity (Done)
+	- Prefab materials
+		- Retrieve materials per prefab (Done)
+		- Add material/s per prefab (Done)
+		- Update material/s per prefab (Done)
+		- Delete material/s per prefab (Done)
+
+- Quotations
+	- List
+	- Generate
+		- Grab material/prefab/other works details (name, description, unit, unit cost/srp)
+		- Calculate subtotal and total (front-end)
+		- Indicate on-hand/for pre-order status per item (front-end)
+- Purchase Orders (Just base it on https://docs.google.com/spreadsheets/d/1DMFXg-x-J7_aSdxRgvNp7qtzPkr0MoLl1xhAKt0JIjc/edit?gid=1537010163#gid=1537010163)
+	- CRUD
+	- Total in currency PHP upon approval
+	- Add material quantities from shipment to inventory upon arrival
+
+- Orders
+	- Quantities and costs per order are based on respective quotation
+
+--- Quotation tables ---
+
+	Quotation
+	- ID, unsigned Int NOT NULL
+	- Version no., unsigned Int NOT NULL DEFAULT 1
+	- PK (ID, Version no.)
+	- Date created, Date NOT NULL
+	- Updated on, Datetime NULL DEFAULT CURRENT_TIMESTAMP
+	- Valid until, Date NOT NULL
+	- Other contact method, VARCHAR NULL
+	- Details, JSON NOT NULL    # template below
+		{
+			"project_details": ,
+			"prefab": [
+				{
+					"prefab_id": ,
+					"prefab_name": ,
+					"prefab_specs": ,
+					"prefab_color": ,
+					"unit_cost": ,
+					"quantity": ,
+					"materials": [
+						{
+							"material_id": ,
+							"material_name": ,
+							"material_specs": ,
+							"material_category": ,
+							"material_unit": ,
+							"material_remarks": ,
+							"material_color": ,
+							"unit_cost": ,
+							"quantity_per_prefab": 
+						}
+					],
+					"desc": 
+				}
+			],
+			"material_offset": [
+				{
+					"material_id": ,
+					"material_name": ,
+					"material_specs": ,
+					"material_category": ,
+					"material_unit": ,
+					"material_remarks": ,
+					"material_color": ,
+					"unit_cost": ,
+					"quantity": ,
+					"desc": 
+				}
+			],
+			"otherworks": [
+				{
+					"otherworks_id": ,
+					"otherworks_name": ,
+					"otherworks_category": ,
+					"otherworks_unit": ,
+					"otherworks_unit_cost": ,
+					"quantity": ,
+					"desc": 
+				}
+			]
+		}
+
+	Quotation contact person
+	- Quotation control no., FK
+	- Name, VARCHAR NOT NULL
+	- PK (Quotation control no., Full name)
+
+	Quotation contact email
+	- Quotation control no., FK
+	- Email address, VARCHAR NOT NULL
+	- PK (Quotation control no., Email address)
+
+	Quotation contact number
+	- Quotation control no., FK
+	- Phone number, VARCHAR NOT NULL
+	- PK (Quotation control no., Phone number)
+
+--- Order tables ---
+
+	Order
+	- Control no., PK VARCHAR NOT NULL    # Derive from contact person, site location, and creation date (<contact person first initial><site location first initial>-<yymmdd>)
+	- Project code, VARCHAR NOT NULL
+	- Project details, Text NULL
+	- Site location, Text NULL
+	- Subtotal, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Other works subtotal, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Overhead cost, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Delivery fee, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Grand total, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Date fully paid, Date NULL
+	- Unit status ID, FK
+	- Order status ID, FK
+	- Dispatch date, Date NULL
+	- Lead source ID, FK
+	- Catered by ID, FK
+
+	Unit status
+	- ID, PK unsigned Int
+	- Unit status, VARCHAR NOT NULL UNIQUE
+
+	Order status
+	- ID, PK unsigned Int
+	- Order status, VARCHAR NOT NULL UNIQUE
+
+	Lead source
+	- ID, PK unsigned Int
+	- Lead source, VARCHAR NOT NULL UNIQUE
+
+	Catered by
+	- ID, PK unsigned Int
+	- Catered by, VARCHAR NOT NULL UNIQUE
+
+	Order material offset
+	- Order control no., FK
+	- Material ID, FK
+	- PK (Order control no., Material ID)
+	- Material name, VARCHAR NOT NULL
+	- Material specs, VARCHAR NULL
+	- Material category, VARCHAR NULL
+	- Material unit, VARCHAR NULL
+	- Material remarks, VARCHAR NULL
+	- Material color, VARCHAR NULL
+	- Unit cost, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Quantity, Int NOT NULL DEFAULT 0
+
+	Order prefab
+	- Order control no., FK
+	- Prefab ID, FK
+	- PK (Order control no., Prefab ID)
+	- Prefab name, VARCHAR NOT NULL
+	- Prefab specs, VARCHAR NULL
+	- Prefab color, VARCHAR NULL
+	- Unit cost, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Quantity, unsigned Int NOT NULL DEFAULT 0
+
+	Order prefab material
+	- Order control no., FK
+	- Prefab ID, FK
+	- Material ID, FK
+	- PK (Order control no., Prefab ID, Material ID)
+	- Material name, VARCHAR NOT NULL
+	- Material specs, VARCHAR NULL
+	- Material category, VARCHAR NULL
+	- Material unit, VARCHAR NULL
+	- Material remarks, VARCHAR NULL
+	- Material color, VARCHAR NULL
+	- Unit cost, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Material quantity per prefab, unsigned Int NOT NULL DEFAULT 0
+
+	Order other works
+	- Order control no., FK
+	- Other works ID, FK
+	- PK (Order control no., Other works ID)
+	- Other works name, VARCHAR NOT NULL
+	- Other works category, VARCHAR NULL
+	- Other works unit, VARCHAR NULL
+	- Unit cost, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Quantity, unsigned Int NOT NULL DEFAULT 0
+
+--- Payment tables ---
+
+	Payment
+	- ID, PK unsigned Int
+	- Order control no., FK
+	- Date paid, Date NOT NULL DEFAULT CURRENT_TIMESTAMP
+	- Balance, Decimal(12,2) NOT NULL DEFAULT (Order control no. -> Grand Total)
+	- Payment amount, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Payment method ID, FK
+	- Credit to account ID, FK
+	- Deposit date, DATE NULL
+	- Payment status ID, FK
+	- Deposit slip, VARCHAR NULL
+
+	Payment method
+	- ID, PK unsigned Int
+	- Payment method, VARCHAR NOT NULL UNIQUE
+
+	Credit to account
+	- ID, PK unsigned Int
+	- Credit to account, VARCHAR NOT NULL UNIQUE
+
+	Payment status
+	- ID, PK unsigned Int
+	- Payment status, VARCHAR NOT NULL UNIQUE
+
+--- Purchase order tables ---
+
+	Purchase order
+	- PI no., PK unsigned Int
+	- Batch, unsigned Int NOT NULL
+	- Batch year, FK unsigned Int NOT NULL
+	- UNIQUE (Batch, Batch year)
+	- Date submitted, Date NULL
+	- Date approved, Date NULL
+	- Subtotal USD, Decimal(12,2) NULL
+	- CIF USD, Decimal(12,2) NULL
+	- Total USD, Decimal(12,2) NULL
+	- Total PHP, Decimal(12,2) NULL
+	- Customs PHP, Decimal(12,2) NULL
+	- Container no., VARCHAR NULL
+	- Remarks, TEXT NULL
+	- Date delivered, Date NULL
+	- Date arrived, Date NULL
+
+	Purchase order prefab
+	- PI no., FK
+	- Prefab ID, FK
+	- PK (PI no., Prefab ID)
+	- Prefab name, VARCHAR NOT NULL
+	- Prefab specs, VARCHAR NULL
+	- Prefab color, VARCHAR NULL
+	- Unit cost, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Quantity, unsigned Int NOT NULL DEFAULT 0
+
+	Purchase order prefab material
+	- PI no., FK
+	- Prefab ID, FK
+	- Material ID, FK
+	- PK (PI no., Prefab ID, Material ID)
+	- Material name, VARCHAR NOT NULL
+	- Material specs, VARCHAR NULL
+	- Material category, VARCHAR NULL
+	- Material unit, VARCHAR NULL
+	- Material remarks, VARCHAR NULL
+	- Material color, VARCHAR NULL
+	- Unit cost, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Material quantity per prefab, unsigned Int NOT NULL DEFAULT 0
+
+	Purchase order material
+	- PI no., FK
+	- Material ID, FK
+	- PK (PI no., Material ID)
+	- Material name, VARCHAR NOT NULL
+	- Material specs, VARCHAR NULL
+	- Material category, VARCHAR NULL
+	- Material unit, VARCHAR NULL
+	- Material remarks, VARCHAR NULL
+	- Material color, VARCHAR NULL
+	- Unit cost, Decimal(12,2) NOT NULL DEFAULT 0.00
+	- Quantity, Int NOT NULL DEFAULT 0
